@@ -1,6 +1,7 @@
 import express from 'express';
 import env from './env.js';
 import scrap from './scraping.js'
+import database from './database.js';
 
 
 
@@ -23,6 +24,7 @@ app.get('/scrape', async (req, res) => {
     }
 })
 
-app.listen(env.PORT, () => {
-    console.log("working perfectly")
+app.listen(env.PORT, async () => {
+    let connection = await database.connect();
+    console.log("connected to db : ", connection.name)
 })

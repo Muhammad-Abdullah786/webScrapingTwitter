@@ -18,6 +18,7 @@
     "dotenv-flow": "^4.1.0",
     "express": "^5.1.0",
     "fake-useragent": "^1.0.1",
+    "mongoose": "^8.16.1",
     "nodemon": "^3.1.10",
     "puppeteer": "^24.11.2",
     "puppeteer-extra": "^3.3.6",
