@@ -14,6 +14,7 @@ app.get('/', (req, res) => {
 app.get('/scrape', async (req, res) => {
     try {
         await scrap();
+        console.log("scraping done")
         res.send("scraping done!!")
     } catch (e) {
         console.log('error occured ↪ ', e)

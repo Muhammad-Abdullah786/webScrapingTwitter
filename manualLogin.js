@@ -3,12 +3,14 @@ import env from './env.js';
 import sleep from './sleepFn.js';
 
 
+
+
+
 export default async function manualLogin(page) {
 
 
     console.log('manual login is starting!! ');
 
-    // await page.goto('https://x.com/login', { waitUntil: 'networkidle2' });
     await sleep(6000)
     await page.waitForSelector('input[name="text"]', { timeout: 10000 });
     const usernameBox = await page.$('input[name="text"]');
@@ -65,18 +67,13 @@ export default async function manualLogin(page) {
     await page.keyboard.press('Enter');
     await sleep(3000);
 
-    // 👇 Scroll a little like a real user
     await page.evaluate(() => window.scrollBy(0, 100));
     await sleep(2000);
     await page.evaluate(() => window.scrollBy(0, -50));
     await sleep(2000);
 
-    // 👇 Wait for navigation
-    // await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 });
-
     console.log("✅ Logged in successfully");
 
-    // 👇 Save cookies
     const cookies = await page.cookies();
     fs.writeFileSync('cookies.json', JSON.stringify(cookies, null, 2));
     console.log("🍪 Cookies saved");

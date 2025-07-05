@@ -3,6 +3,6 @@ dotenv.config();
 
 export default {
     PORT: process.env.PORT,
-    USERNAME: process.env.USERNAME,
-    PASSWORD: process.env.PASSWORD
+    PASSWORD: process.env.PASSWORD,
+    USERNAME: process.env.NAME,
 }

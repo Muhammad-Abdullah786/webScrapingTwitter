@@ -12,9 +12,7 @@ export default async function scrap() {
     const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
 
-    // const proxies = {
 
-    // }
     const browser = await puppeteer.launch({
         headless: false,
         executablePath: '/usr/bin/google-chrome-stable',
@@ -43,11 +41,16 @@ export default async function scrap() {
             const cookies = JSON.parse(fs.readFileSync('./cookies.json', 'utf-8'));
             await page.setCookie(...cookies);
             console.log("🍪 Cookies loaded and applied");
+            await page.goto('https://x.com/home', { waitUntil: 'networkidle2', timeout: 60000 });
+            await sleep(8000)
+        } else {
+            await manualLogin(page);
+            await page.goto('https://x.com/home', { waitUntil: 'networkidle2', timeout: 60000 });
+            await sleep(8000)
+
         }
 
-        await manualLogin(page);
-        await page.goto('https://x.com/home', { waitUntil: 'networkidle2', timeout: 60000 });
-        await sleep(10000)
+
     }
 
 
