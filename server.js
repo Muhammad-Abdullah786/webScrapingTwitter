@@ -1,7 +1,7 @@
 import express from 'express';
-import env from './env.js';
+import env from './utility/env.js';
 import scrap from './scraping.js'
-import database from './database.js';
+import database from './utility/database.js';
 
 
 
