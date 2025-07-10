@@ -1,17 +1,15 @@
 import sleep from "./sleepFn.js";
-
-let isListening = false;
+let isListening = false
 const videoUrls = new Set();
 
 export async function interceptVideos(page) {
-    // console.log(`started gathering videos`)
     if (!isListening) {
         await page.setRequestInterception(true);
+        console.log(`🔍 started gathering videos`)
 
         page.on('request', (req) => {
             const url = req.url();
-            console.log(`the video url is ${url}`)
-            if (url.includes('video.twimg.com') && url.includes('.m3u8') && req.resourceType() === 'media') {
+            if (url.includes('video.twimg.com') && url.includes('.m3u8')) {
                 videoUrls.add(url);
             }
 
@@ -25,11 +23,10 @@ export async function interceptVideos(page) {
             }
         });
 
-        isListening = true;
+        isListening = true
     }
-
-    // wait to give time for video requests to arrive
-    await sleep(3000);
+    // videoUrls.clear()
+    await sleep(5000);
 
     return Array.from(videoUrls);
 }

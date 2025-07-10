@@ -1,53 +1,50 @@
 import sleep from "./sleepFn.js";
-
 export async function gatherMedia(page) {
-
-    console.log(`started gathering data `)
     return await page.evaluate(() => {
-        const result = [] // ?this will contail all data tweet, image/videos
-        let hasVideo ;
-        let post = document.querySelectorAll('[data-testid="tweet"] ,article');
-        Array.from(post).forEach((post) => {
-            let media = []// `` this is where i will save my images if ther is!!
-            let images = post.querySelectorAll('img')
-            images.forEach(img => {
+        const result = [];
+        const posts = document.querySelectorAll('[data-testid="tweet"], article');
+
+        Array.from(posts).forEach((post) => {
+            const images = [];
+            const hasVideo = !!post.querySelector('video');
+
+            const imgTags = post.querySelectorAll('img');
+            imgTags.forEach(img => {
                 if (img.src && img.src.includes('media')) {
-                    let cleanup = img.src.replace(/name=\w+/, 'name=orig')
-                    media.push({ type: 'image', url: cleanup })
+                    const cleaned = img.src.replace(/name=\w+/, 'name=orig');
+                    images.push({ type: 'image', url: cleaned });
                 }
-            })// >>  here  image gathering is done
+            });
 
-            //! since we cannot download video we will intercept in network and get the url
-             hasVideo = !!post.querySelector('video')
+            const tweetElem = post.querySelector('div[lang]');
+            const tweetText = tweetElem ? tweetElem.innerText.trim() : '';
 
-            //>> got the tweet
-            const textElem = post.querySelector('div[lang]');
-            let tweet = textElem ? textElem.innerText.trim() : '';
+            const timeElem = post.querySelector('time');
+            const time = timeElem ? timeElem.getAttribute('datetime') : null;
 
-            //>> got the time
-            const timeElement = post.querySelector('time')
-            let time = timeElement ? timeElement.getAttribute('datetime') : null;
-
-
-
-            if (media.length > 0) {
-                media.forEach((data => {
+            if (images.length > 0) {
+                images.forEach(data => {
                     result.push({
                         url: data.url,
-                        type: data.type,
-                        tweet,
+                        type: 'image',
+                        tweet: tweetText,
                         time
-                    })
-                }))
+                    });
+                });
             }
-        })
 
+            if (hasVideo) {
+                result.push({
+                    url: 'video-url',
+                    type: 'video',
+                    tweet: tweetText,
+                    time
+                });
+            }
+        });
 
-
-
-
-        return { result, hasVideo }
-    })
+        return result;
+    });
 }
 
 export async function autoScroll(page, scrollDelay = 1000, maxScrolls = 10) {

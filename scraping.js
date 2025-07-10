@@ -23,8 +23,8 @@ export default async function scrap() {
 
     });
     const page = await browser.newPage();
-
     await page.setUserAgent(userAgent);
+    // await page.setRequestInterception(true);
 
     await page.goto('https://x.com/home', { waitUntil: 'networkidle2', timeout: 60000 });
 
@@ -62,56 +62,84 @@ export default async function scrap() {
         await popupHandler(page)
         await sleep(3000)
     }
-    let allPosts = new Set();
-    let scrollAttempt = 0;
-    let maxScroll = 3;
-    let maxPost = 1;
-    while (allPosts.size < maxPost && scrollAttempt < maxScroll) {
-        await autoScroll(page, 1000, 10)
-        await sleep(6000)
-        const getVideos = await interceptVideos(page)
-        let { result: mediaItem, hasVideo } = await gatherMedia(page)
+    let savedCount = 0;
+    let maxPost = 5;
+    let processedTweetIds = new Set();
+    let videoIndex = 0
 
-        for (const item of mediaItem) {
-            console.log(`scroll attempt done ${scrollAttempt}`)
-            console.log(`the videos are ${getVideos.pop()}`)
-            const { tweet, time, url, type } = item
-            //>> skiping previw video images
-            if (type === 'video' && (url.startsWith('blob:') || url.endsWith('.jpg'))) {
+    while (savedCount < maxPost) {
+        const tweets = await page.$$('article');
+        for (const tweet of tweets) {
+            const tweetId = await tweet.evaluate(el => {
+                const anchor = el.querySelector('a[href*="/status/"]');
+                const timeEl = el.querySelector('time');
+                if (anchor) return anchor.href;
+                if (timeEl) return timeEl.getAttribute('datetime');
+                return el.innerText.slice(0, 30); // fallback
+            });
+
+
+            if (processedTweetIds.has(tweetId)) {
+                console.log(`⏩ Already processed tweet: ${tweetId}`);
                 continue;
             }
-            const exist = await Media.exists({ url })
-            if (exist) {
-                console.log(`it already exist ${url}`)
-            } else {
-                allPosts.add(item)
+            console.log(`🔄 Processing new tweet: ${tweetId}`);
+            processedTweetIds.add(tweetId);
+
+            await tweet.scrollIntoViewIfNeeded();
+            await sleep(3000);
+
+            const getVideos = await interceptVideos(page);
+            console.log(`the getVideos array has this  ${getVideos}`)
+            const mediaItems = await gatherMedia(page);
+
+            for (const item of mediaItems) {
+                const { tweet, time, url, type } = item;
+
+                if (type === 'video' && (url.startsWith('blob:') || url.endsWith('.jpg'))) continue;
+                let finalUrl = url;
+
+                if (type === 'video') {
+                    finalUrl = getVideos[videoIndex] || null;
+                    videoIndex++;
+                }
+
+                if (!finalUrl) {
+                    console.warn(`⚠️ Skipping item without valid URL ${finalUrl}`);
+                    continue;
+                }
+
+                const exists = await Media.exists({ url: finalUrl });
+                if (exists) {
+                    console.log(`already exists: ${finalUrl}`);
+                    continue;
+                }
+
                 await Media.create({
                     from: link,
-                    url: type === 'video' ? getVideos.pop() : url,
+                    url: finalUrl,
                     type,
                     time,
                     tweet
-                })
-                // console.log(`saved ${type} and url is ${url}`)
+                });
+
+                savedCount++;
+                console.log(`checking for url ${getVideos}`)
+                console.log(`✅ Saved post ${savedCount}/${maxPost}`);
+
+                if (savedCount >= maxPost) break;
             }
+
+            if (savedCount >= maxPost) break;
         }
-        console.log(`post saved ${allPosts.size}`)
-        scrollAttempt++
-    }
 
-    if (allPosts.size === 0) {
-
-        // todo maybe i need to scroll or check for captha etc
-
-        console.log('error no image')
-    } else {
-        console.log(`🖼️ Received images ${allPosts.size} `);
-
+        await sleep(2000);
     }
 
 
 
-    // await browser.close();
+
+    await browser.close();
 }
 
 
