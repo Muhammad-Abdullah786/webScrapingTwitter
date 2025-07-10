@@ -1,19 +1,19 @@
 import fs from 'fs';
-import https from 'https';
 import manualLogin from './utility/manualLogin.js';
 import sleep from './utility/sleepFn.js';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import Image from './imageSchema.js';
 import popupHandler from './utility/popupHandler.js';
-import { gatherImage, autoScroll } from './utility/gatherImage.js'
+import { gatherMedia, autoScroll } from './utility/gatherMedia.js'
+import Media from './mediaSchema.js';
+import { interceptVideos } from './utility/downloadVideo.js';
 
 puppeteer.use(StealthPlugin());
 
 
 export default async function scrap() {
     const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
-    const link = 'https://x.com/adultfavorite'
+    const link = 'https://x.com/trackingisrael'
 
 
     const browser = await puppeteer.launch({
@@ -55,9 +55,6 @@ export default async function scrap() {
 
 
     }
-
-
-
     let sensitiveData = await page.evaluate(() => {
         return Array.from(document.querySelectorAll('span')).some(element => element.innerText.toLowerCase().includes("potentially sensitive content"))
     })
@@ -65,31 +62,54 @@ export default async function scrap() {
         await popupHandler(page)
         await sleep(3000)
     }
-    await autoScroll(page, 1000, 20)
-    let imagesUrl = await gatherImage(page)
+    let allPosts = new Set();
+    let scrollAttempt = 0;
+    let maxScroll = 3;
+    let maxPost = 1;
+    while (allPosts.size < maxPost && scrollAttempt < maxScroll) {
+        await autoScroll(page, 1000, 10)
+        await sleep(6000)
+        const getVideos = await interceptVideos(page)
+        let { result: mediaItem, hasVideo } = await gatherMedia(page)
 
-    if (imagesUrl.length === 0) {
-        // todo maybe i need to scroll or check for captha etc
-        console.log('error no image')
-    } else {
-        console.log(`🖼️ Received images ${imagesUrl.length} `);
-        let uniqueImg = Array.from(new Set(imagesUrl)) // ? now putting in set object then converting into array
-        for (let i = 0; i < uniqueImg.length; i++) {
-            let url = uniqueImg[i]
-            // `` checking if same img not exist in db
-            const exist = await Image.exists({ url })
-            if (!exist) {
-                await Image.create({
-                    from: link,
-                    url: url,
-                })
-                console.log(`image saved ${uniqueImg[i]}`)
+        for (const item of mediaItem) {
+            console.log(`scroll attempt done ${scrollAttempt}`)
+            console.log(`the videos are ${getVideos.pop()}`)
+            const { tweet, time, url, type } = item
+            //>> skiping previw video images
+            if (type === 'video' && (url.startsWith('blob:') || url.endsWith('.jpg'))) {
+                continue;
+            }
+            const exist = await Media.exists({ url })
+            if (exist) {
+                console.log(`it already exist ${url}`)
             } else {
-                console.log(`already exist moving on`)
+                allPosts.add(item)
+                await Media.create({
+                    from: link,
+                    url: type === 'video' ? getVideos.pop() : url,
+                    type,
+                    time,
+                    tweet
+                })
+                // console.log(`saved ${type} and url is ${url}`)
             }
         }
+        console.log(`post saved ${allPosts.size}`)
+        scrollAttempt++
+    }
+
+    if (allPosts.size === 0) {
+
+        // todo maybe i need to scroll or check for captha etc
+
+        console.log('error no image')
+    } else {
+        console.log(`🖼️ Received images ${allPosts.size} `);
 
     }
+
+
 
     // await browser.close();
 }
