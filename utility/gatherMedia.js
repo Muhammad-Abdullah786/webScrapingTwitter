@@ -1,5 +1,8 @@
 import sleep from "./sleepFn.js";
+
 export async function gatherMedia(page) {
+    await page.setRequestInterception(true);
+
     return await page.evaluate(() => {
         const result = [];
         const posts = document.querySelectorAll('[data-testid="tweet"], article');
@@ -35,7 +38,7 @@ export async function gatherMedia(page) {
 
             if (hasVideo) {
                 result.push({
-                    url: 'video-url',
+                    url: 'video-url',//? i will get this url from the intercept network
                     type: 'video',
                     tweet: tweetText,
                     time

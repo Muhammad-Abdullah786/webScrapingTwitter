@@ -1,32 +1,39 @@
-import sleep from "./sleepFn.js";
-let isListening = false
-const videoUrls = new Set();
+import { exec } from 'child_process';
+import { writeFileSync } from 'fs';
+import path from 'path';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-export async function interceptVideos(page) {
-    if (!isListening) {
-        await page.setRequestInterception(true);
-        console.log(`🔍 started gathering videos`)
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-        page.on('request', (req) => {
-            const url = req.url();
-            if (url.includes('video.twimg.com') && url.includes('.m3u8')) {
-                videoUrls.add(url);
-            }
 
-            // prevent double-handling errors
-            if (!req._interceptionHandled) {
-                try {
-                    req.continue();
-                } catch (err) {
-                    console.warn("Request continue error:", err.message);
-                }
-            }
-        });
+export async function convertToMP4(stream ) {
+    console.log(`the stream comming to convert is ${stream.master}`)
+    const outFile = path.join(__dirname, 'downloads', `${stream.baseId}.mp4`);
 
-        isListening = true
+    if (stream.master) {
+        console.log(`🎞️ Using master playlist... `);
+        await runFFmpeg(`ffmpeg -y -i "${stream.master}" -c copy "${outFile}"`);
+    } else if (stream.video && stream.audio) {
+        console.log(`🎞️ Merging separate video and audio...`);
+        await runFFmpeg(`ffmpeg -y -i "${stream.video}" -i "${stream.audio}" -c copy "${outFile}"`);
+    } else {
+        console.warn(`⚠️ Missing audio or video for ${stream.baseId}, skipping...`);
+        return null;
     }
-    // videoUrls.clear()
-    await sleep(5000);
 
-    return Array.from(videoUrls);
+    return outFile;
+}
+
+function runFFmpeg(cmd) {
+    return new Promise((resolve, reject) => {
+        exec(cmd, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`❌ FFmpeg error:`, stderr || stdout);
+                return reject(error);
+            }
+            console.log(`✅ Conversion done.`);
+            resolve();
+        });
+    });
 }

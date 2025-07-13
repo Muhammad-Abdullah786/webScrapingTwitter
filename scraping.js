@@ -6,7 +6,9 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import popupHandler from './utility/popupHandler.js';
 import { gatherMedia, autoScroll } from './utility/gatherMedia.js'
 import Media from './mediaSchema.js';
-import { interceptVideos } from './utility/downloadVideo.js';
+import { interceptVideos } from './utility/getVideoURL.js';
+import { convertToMP4 } from './utility/downloadVideo.js';
+import { randomUUID } from 'crypto';
 
 puppeteer.use(StealthPlugin());
 
@@ -24,7 +26,6 @@ export default async function scrap() {
     });
     const page = await browser.newPage();
     await page.setUserAgent(userAgent);
-    // await page.setRequestInterception(true);
 
     await page.goto('https://x.com/home', { waitUntil: 'networkidle2', timeout: 60000 });
 
@@ -65,7 +66,6 @@ export default async function scrap() {
     let savedCount = 0;
     let maxPost = 5;
     let processedTweetIds = new Set();
-    let videoIndex = 0
 
     while (savedCount < maxPost) {
         const tweets = await page.$$('article');
@@ -78,7 +78,6 @@ export default async function scrap() {
                 return el.innerText.slice(0, 30); // fallback
             });
 
-
             if (processedTweetIds.has(tweetId)) {
                 console.log(`⏩ Already processed tweet: ${tweetId}`);
                 continue;
@@ -87,26 +86,29 @@ export default async function scrap() {
             processedTweetIds.add(tweetId);
 
             await tweet.scrollIntoViewIfNeeded();
-            await sleep(3000);
-
-            const getVideos = await interceptVideos(page);
-            console.log(`the getVideos array has this  ${getVideos}`)
+            await sleep(2000);
+            const videoURL = await interceptVideos(page)
             const mediaItems = await gatherMedia(page);
+            console.log(` the media of the video url is ${JSON.stringify(videoURL, 2, 2)}`)
+            console.log(`and the medis Items has  🙋 c ${JSON.stringify(mediaItems, 2, 2)}`)
+
 
             for (const item of mediaItems) {
                 const { tweet, time, url, type } = item;
 
-                if (type === 'video' && (url.startsWith('blob:') || url.endsWith('.jpg'))) continue;
                 let finalUrl = url;
-
                 if (type === 'video') {
-                    finalUrl = getVideos[videoIndex] || null;
-                    videoIndex++;
-                }
+                    if (!videoURL || videoURL.length === 0) {
+                        finalUrl = randomUUID();
+                        console.log(`the video url is empty `)
+                    } else {
+                        for (const video of videoURL) {
+                            finalUrl = video.master || video.video;
+                            await convertToMP4(video)
+                        }
 
-                if (!finalUrl) {
-                    console.warn(`⚠️ Skipping item without valid URL ${finalUrl}`);
-                    continue;
+
+                    }
                 }
 
                 const exists = await Media.exists({ url: finalUrl });
@@ -124,7 +126,6 @@ export default async function scrap() {
                 });
 
                 savedCount++;
-                console.log(`checking for url ${getVideos}`)
                 console.log(`✅ Saved post ${savedCount}/${maxPost}`);
 
                 if (savedCount >= maxPost) break;
