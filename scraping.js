@@ -12,9 +12,13 @@ import { randomUUID } from 'crypto';
 
 puppeteer.use(StealthPlugin());
 
-export default async function scrap() {
-    const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
-    const link = 'https://x.com/trackingisrael';
+export default async function scrap({ link, maxPost, username, password }) {
+    console.log(`🚀 Received parameters:
+  link: ${link}
+  maxPost: ${maxPost}
+  username: ${username}
+  password: ${'*'.repeat(password.length)}
+`); const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
     let groupedVideos = {};
 
     const browser = await puppeteer.launch({
@@ -43,7 +47,7 @@ export default async function scrap() {
             await page.setCookie(...cookies);
             console.log("🍪 Cookies loaded and applied");
         } else {
-            await manualLogin(page);
+            await manualLogin(page, username, password);
         }
         await page.goto(link, { waitUntil: 'networkidle2', timeout: 60000 });
         await sleep(8000);
@@ -60,7 +64,6 @@ export default async function scrap() {
     }
 
     let savedCount = 0;
-    const maxPost = 30;
     const processedTweetIds = new Set();
     const cloudinaryArray = []
 

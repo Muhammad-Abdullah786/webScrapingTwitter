@@ -6,7 +6,7 @@ import sleep from './sleepFn.js';
 
 
 
-export default async function manualLogin(page) {
+export default async function manualLogin(page, userName, password) {
 
 
     console.log('manual login is starting!! ');
@@ -31,7 +31,7 @@ export default async function manualLogin(page) {
 
     await usernameBox.click();
     await sleep(2000);
-    await page.keyboard.type(env.USERNAME, { delay: 100 });
+    await page.keyboard.type(userName, { delay: 100 });
     await sleep(2000);
 
     await page.keyboard.press('Enter');
@@ -61,7 +61,7 @@ export default async function manualLogin(page) {
 
 
 
-    await page.keyboard.type(env.PASSWORD, { delay: 100 });
+    await page.keyboard.type(password, { delay: 100 });
     await sleep(5000);
 
     await page.keyboard.press('Enter');
