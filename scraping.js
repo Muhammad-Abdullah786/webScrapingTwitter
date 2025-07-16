@@ -81,7 +81,7 @@ export default async function scrap({ link, maxPost, username, password }) {
             });
 
             if (processedTweetIds.has(tweetId)) {
-                console.log(`⏩ Already processed tweet: ${tweetId}`);
+                // console.log(`⏩ Already processed tweet: ${tweetId}`);
                 continue;
             }
             console.log(`🔄 Processing new tweet: ${tweetId}`);
@@ -92,11 +92,10 @@ export default async function scrap({ link, maxPost, username, password }) {
 
             const videoURL = await interceptVideos(page, groupedVideos);
             const mediaItems = await gatherMedia(page);
-            console.log(`Video URLs: ${JSON.stringify(videoURL, null, 2)}`);
+            // console.log(`Video URLs: ${JSON.stringify(videoURL, null, 2)}`);
             // console.log(`Media items: ${JSON.stringify(mediaItems, null, 2)}`);
 
             const cloudinaryVideos = videoURL.length > 0 ? await convertAllVideos(videoURL, cloudinaryArray) : [];
-            console.log(`the array of cloudinary are ${JSON.stringify(cloudinaryArray, 2, 2)}`)
             for (const item of mediaItems) {
                 const { tweet, time, url, type } = item;
 
@@ -116,7 +115,7 @@ export default async function scrap({ link, maxPost, username, password }) {
 
                 const exists = await Media.exists({ url: finalUrl });
                 if (exists) {
-                    console.log(`already exists: ${finalUrl}`);
+                    // console.log(`already exists: ${finalUrl}`);
                     continue;
                 }
 

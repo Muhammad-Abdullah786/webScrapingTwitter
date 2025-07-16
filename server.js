@@ -2,6 +2,7 @@ import scrap from './scraping.js';
 import database from './utility/database.js';
 import { program } from 'commander';
 import inquirer from 'inquirer';
+import { exportData } from './utility/exportData.js';
 
 program
     .option('-u, --url <url>', 'URL to scrape (must be x.com)')
@@ -77,6 +78,18 @@ async function main() {
             username,
             password
         });
+        const { exportFormat } = await inquirer.prompt({
+            type: 'list',
+            name: 'exportFormat',
+            message: '📥 Would you like to export the data?',
+            choices: ['json', 'csv', 'no'],
+        });
+
+        if (exportFormat !== 'no') {
+            const mdbCollection = connection.name
+            await exportData(mdbCollection, exportFormat)
+
+        }
 
     } catch (error) {
         console.error(`an error occurred in scraping`, error);

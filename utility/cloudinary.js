@@ -46,13 +46,14 @@ export async function uploadVideoToCloudinaryStream(inputUrl, publicId) {
                 resource_type: 'video',
                 public_id: `twitter_videos/${publicId}`,
                 overwrite: true,
+                folder: 'twitter_videos'
             },
             (error, result) => {
                 if (error) {
                     console.error(`❌ Cloudinary upload failed:`, error);
                     return reject(error);
                 }
-                console.log(`✅ Cloudinary upload success:`, result.secure_url);
+                // console.log(`✅ Cloudinary upload success:`, result.secure_url);
                 resolve(result.secure_url);
             }
         );
