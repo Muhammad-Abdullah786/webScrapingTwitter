@@ -4,11 +4,12 @@ import sleep from './utility/sleepFn.js';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import popupHandler from './utility/popupHandler.js';
-import { gatherMedia, autoScroll } from './utility/gatherMedia.js'
+import { gatherMedia, autoScroll } from './download-media/gatherMedia.js'
 import Media from './mediaSchema.js';
-import { interceptVideos } from './utility/getVideoURL.js';
-import { convertToMP4 } from './utility/downloadVideo.js';
+import { interceptVideos } from './download-media/getVideoURL.js';
+import { convertToMP4 } from './download-media/downloadVideo.js';
 import { randomUUID } from 'crypto';
+import { convertAllVideos } from './download-media/parallelDownload.js';
 
 puppeteer.use(StealthPlugin());
 
@@ -16,6 +17,7 @@ puppeteer.use(StealthPlugin());
 export default async function scrap() {
     const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
     const link = 'https://x.com/trackingisrael'
+    let groupedVideos = {};
 
 
     const browser = await puppeteer.launch({
@@ -30,6 +32,7 @@ export default async function scrap() {
     await page.goto('https://x.com/home', { waitUntil: 'networkidle2', timeout: 60000 });
 
     await sleep(10000);
+    await interceptVideos(page, groupedVideos)
 
     // ? 🔍 Check if login
     const isLoginPage = await page.evaluate(() => {
@@ -64,8 +67,9 @@ export default async function scrap() {
         await sleep(3000)
     }
     let savedCount = 0;
-    let maxPost = 5;
+    let maxPost = 30;
     let processedTweetIds = new Set();
+
 
     while (savedCount < maxPost) {
         const tweets = await page.$$('article');
@@ -87,10 +91,10 @@ export default async function scrap() {
 
             await tweet.scrollIntoViewIfNeeded();
             await sleep(2000);
-            const videoURL = await interceptVideos(page)
+            const videoURL = await interceptVideos(page, groupedVideos)
             const mediaItems = await gatherMedia(page);
-            console.log(` the media of the video url is ${JSON.stringify(videoURL, 2, 2)}`)
-            console.log(`and the medis Items has  🙋 c ${JSON.stringify(mediaItems, 2, 2)}`)
+            // console.log(` the media of the video url is ${JSON.stringify(videoURL, 2, 2)}`)
+            // console.log(`and the medis Items has  🙋 c ${JSON.stringify(mediaItems, 2, 2)}`)
 
 
             for (const item of mediaItems) {
@@ -102,14 +106,20 @@ export default async function scrap() {
                         finalUrl = randomUUID();
                         console.log(`the video url is empty `)
                     } else {
-                        for (const video of videoURL) {
-                            finalUrl = video.master || video.video;
-                            await convertToMP4(video)
+                        const matched = !!videoURL.find(v => url.includes(v.baseId));
+                        if (matched) {
+                            const cloudinaryVideos = await convertAllVideos(videoURL)
+                            let realURl = cloudinaryVideos.find(cUrl => {
+                                cUrl.includes(`/twitter_videos/${url}.mp4`)
+                            }
+                            );
+                            console.log(`the real url is ${realURl}`)
+                            finalUrl = realURl
+                            // finalUrl = videoURL.master || videoURL.audio || videoURL.video;
                         }
-
-
                     }
                 }
+
 
                 const exists = await Media.exists({ url: finalUrl });
                 if (exists) {
@@ -140,7 +150,7 @@ export default async function scrap() {
 
 
 
-    await browser.close();
+    // await browser.close();
 }
 
 

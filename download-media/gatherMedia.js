@@ -1,7 +1,6 @@
-import sleep from "./sleepFn.js";
+import sleep from "../utility/sleepFn.js";
 
 export async function gatherMedia(page) {
-    await page.setRequestInterception(true);
 
     return await page.evaluate(() => {
         const result = [];
@@ -10,6 +9,7 @@ export async function gatherMedia(page) {
         Array.from(posts).forEach((post) => {
             const images = [];
             const hasVideo = !!post.querySelector('video');
+            const videoElement = post.querySelector('video')
 
             const imgTags = post.querySelectorAll('img');
             imgTags.forEach(img => {
@@ -21,6 +21,7 @@ export async function gatherMedia(page) {
 
             const tweetElem = post.querySelector('div[lang]');
             const tweetText = tweetElem ? tweetElem.innerText.trim() : '';
+            const baseId = post.querySelector('poster');
 
             const timeElem = post.querySelector('time');
             const time = timeElem ? timeElem.getAttribute('datetime') : null;
@@ -37,12 +38,17 @@ export async function gatherMedia(page) {
             }
 
             if (hasVideo) {
-                result.push({
-                    url: 'video-url',//? i will get this url from the intercept network
-                    type: 'video',
-                    tweet: tweetText,
-                    time
-                });
+                const posterUrl = videoElement.getAttribute('poster')
+                const match = posterUrl.match(/amplify_video_thumb\/(\d+)\//);
+                if (match) {
+                    const baseId = match[1];
+                    result.push({
+                        url: baseId,//? this is the privew and the baseid of video  i will get this url from the intercept network
+                        type: 'video',
+                        tweet: tweetText,
+                        time
+                    });
+                }
             }
         });
 

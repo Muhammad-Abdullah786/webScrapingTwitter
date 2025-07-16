@@ -1,10 +1,13 @@
-import sleep from "./sleepFn.js";
+import sleep from "../utility/sleepFn.js";
 
 const seenUrls = new Set();
-let groupedVideos = {};
 let isListening = false;
 
-export async function interceptVideos(page) {
+export async function interceptVideos(page, groupedVideos) {
+    if (Object.keys(groupedVideos).length === 20) {
+        console.log(`tihs length os too long reseting `)
+        groupedVideos = {}
+    }
     if (!isListening) {
         await page.setRequestInterception(true);
         console.log("🔍 Interceptor started");
@@ -16,7 +19,7 @@ export async function interceptVideos(page) {
                 url.includes('.m3u8') &&
                 !seenUrls.has(url)
             ) {
-                seenUrls.add(url); // ✅ no duplicates
+                seenUrls.add(url);
 
                 const match = url.match(/amplify_video\/(\d+)\//);
                 if (match) {
@@ -51,9 +54,9 @@ export async function interceptVideos(page) {
         });
 
         isListening = true;
-        console.log(`the group video in intercep url is ${JSON.stringify(groupedVideos, 2, 2)}`)
     }
 
     await sleep(3000);
-    return Object.values(groupedVideos); // ✅ Unique + structured
+    console.log(`the group video in intercep url is ${JSON.stringify(groupedVideos, 2, 2)}`)
+    return Object.values(groupedVideos);
 }
