@@ -52,11 +52,10 @@ export async function interceptVideos(page, groupedVideos) {
                 }
             }
         });
-
         isListening = true;
     }
 
     await sleep(3000);
-    console.log(`the group video in intercep url is ${JSON.stringify(groupedVideos, 2, 2)}`)
+    // console.log(`the group video in intercep url is ${JSON.stringify(groupedVideos, 2, 2)}`)
     return Object.values(groupedVideos);
 }
