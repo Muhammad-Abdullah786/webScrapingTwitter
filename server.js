@@ -5,7 +5,7 @@ import inquirer from 'inquirer';
 
 program
     .option('-u, --url <url>', 'URL to scrape (must be x.com)')
-    .option('-p, --max-posts <number>', 'Number of posts to scrape');
+    .option('-p, --max-post <number>', 'Number of posts to scrape');
 
 program.parse(process.argv);
 const options = program.opts();
@@ -14,7 +14,7 @@ async function askQuestions() {
     const questions = [];
 
     const urlProvided = options.url && options.url.startsWith("https://x.com/");
-    const postsProvided = options.maxPosts && !isNaN(options.maxPosts);
+    const postsProvided = options.maxPost && !isNaN(options.maxPost);
 
     if (!urlProvided) {
         questions.push({
@@ -30,7 +30,7 @@ async function askQuestions() {
     if (!postsProvided) {
         questions.push({
             type: 'number',
-            name: 'maxPosts',
+            name: 'maxPost',
             message: '🔢 How many posts do you want to scrape?',
             default: 10,
             validate: input =>
@@ -58,7 +58,7 @@ async function askQuestions() {
 
     return {
         link: urlProvided ? options.url : answers.url,
-        maxPost: postsProvided ? Number(options.maxPosts) : answers.maxPosts,
+        maxPost: postsProvided ? Number(options.maxPost) : answers.maxPost,
         username: answers.username,
         password: answers.password,
     };

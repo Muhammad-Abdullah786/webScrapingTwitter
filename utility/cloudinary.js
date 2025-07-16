@@ -1,6 +1,6 @@
-import { v2 as cloudinary, v2 } from 'cloudinary'
+import { v2 as cloudinary } from 'cloudinary'
+import { spawn } from 'child_process';
 import env from './env.js'
-import fs from 'fs/promises'
 
 cloudinary.config({
     cloud_name: env.CLOUD_NAME,
@@ -9,22 +9,69 @@ cloudinary.config({
 })
 
 
-export async function uploadVideoToCloudinary(filePath, publicId) {
-    try {
-        const result = await v2.uploader.upload(filePath, {
-            resource_type: 'video',
-            public_id: publicId,
-            folder: 'twitter_videos',
-            overwrite: true,
+// export async function uploadVideoToCloudinary(filePath, publicId) {
+//     try {
+//         const result = await v2.uploader.upload(filePath, {
+//             resource_type: 'video',
+//             public_id: publicId,
+//             folder: 'twitter_videos',
+//             overwrite: true,
+//         });
+
+
+//         // Optionally delete local file after upload
+//         await fs.unlink(filePath);
+
+//         return result.secure_url;
+//     } catch (error) {
+//         console.error(`❌ Cloudinary upload failed:`, error);
+//         throw error;
+//     }
+// }
+
+
+export async function uploadVideoToCloudinaryStream(inputUrl, publicId) {
+    return new Promise((resolve, reject) => {
+        const ffmpeg = spawn('ffmpeg', [
+            '-i', inputUrl,
+            '-f', 'mp4',
+            '-c', 'copy',
+            '-movflags', 'frag_keyframe+empty_moov', // helps Cloudinary process it
+            '-loglevel', 'quiet',
+            '-'
+        ]);
+
+        const cloudStream = cloudinary.uploader.upload_stream(
+            {
+                resource_type: 'video',
+                public_id: `twitter_videos/${publicId}`,
+                overwrite: true,
+            },
+            (error, result) => {
+                if (error) {
+                    console.error(`❌ Cloudinary upload failed:`, error);
+                    return reject(error);
+                }
+                console.log(`✅ Cloudinary upload success:`, result.secure_url);
+                resolve(result.secure_url);
+            }
+        );
+
+        ffmpeg.stdout.pipe(cloudStream);
+
+        ffmpeg.stderr.on('data', (data) => {
+            console.error(`⚠️ FFmpeg stderr: ${data}`);
         });
 
+        ffmpeg.on('error', (err) => {
+            console.error('❌ FFmpeg process error:', err);
+            reject(err);
+        });
 
-        // Optionally delete local file after upload
-        await fs.unlink(filePath);
-
-        return result.secure_url;
-    } catch (error) {
-        console.error(`❌ Cloudinary upload failed:`, error);
-        throw error;
-    }
+        ffmpeg.on('close', (code) => {
+            if (code !== 0) {
+                reject(new Error(`FFmpeg exited with code ${code}`));
+            }
+        });
+    });
 }

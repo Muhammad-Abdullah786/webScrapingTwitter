@@ -50,7 +50,7 @@ export default async function scrap({ link, maxPost, username, password }) {
             await manualLogin(page, username, password);
         }
         await page.goto(link, { waitUntil: 'networkidle2', timeout: 60000 });
-        await sleep(8000);
+
     }
 
     let sensitiveData = await page.evaluate(() => {
