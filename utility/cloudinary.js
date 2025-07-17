@@ -31,7 +31,21 @@ cloudinary.config({
 
 
 export async function uploadVideoToCloudinaryStream(inputUrl, publicId) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const result = await cloudinary.api.resource(`twitter_videos/${publicId}.mp4`, {
+                resource_type: 'video'
+            })
+            if (result) {
+                console.log(`the video is already existing 🤫 `)
+                return resolve(result.secure_url)
+            }
+        } catch (error) {
+            if (error.http_code !== 404)
+                console.error(`an error orrcred ${JSON.stringify(error, 2, 2)}`)
+            // return reject(error)
+        }
+
         const ffmpeg = spawn('ffmpeg', [
             '-i', inputUrl,
             '-f', 'mp4',
@@ -53,7 +67,7 @@ export async function uploadVideoToCloudinaryStream(inputUrl, publicId) {
                     console.error(`❌ Cloudinary upload failed:`, error);
                     return reject(error);
                 }
-                // console.log(`✅ Cloudinary upload success:`, result.secure_url);
+                console.log(`✅ Cloudinary upload success:`, result.secure_url);
                 resolve(result.secure_url);
             }
         );

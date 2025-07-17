@@ -95,7 +95,8 @@ export default async function scrap({ link, maxPost, username, password }) {
             // console.log(`Video URLs: ${JSON.stringify(videoURL, null, 2)}`);
             // console.log(`Media items: ${JSON.stringify(mediaItems, null, 2)}`);
 
-            const cloudinaryVideos = videoURL.length > 0 ? await convertAllVideos(videoURL, cloudinaryArray) : [];
+            const { cloudinaryVideos, check: results } = videoURL.length > 0 ? await convertAllVideos(videoURL, cloudinaryArray) : [];
+            console.log(`the results are ${JSON.stringify(results, 2, 2)}`)
             for (const item of mediaItems) {
                 const { tweet, time, url, type } = item;
 

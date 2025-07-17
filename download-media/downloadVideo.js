@@ -1,10 +1,6 @@
-import { exec } from 'child_process';
-import path from 'path';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
 import { uploadVideoToCloudinaryStream } from '../utility/cloudinary.js'
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// const __dirname = dirname(fileURLToPath(import.meta.url));
 
 
 // export async function convertToMP4(stream) {
@@ -62,7 +58,7 @@ export async function convertToMP4(stream) {
 
         return cloudinaryFile;
     } catch (error) {
-        console.error(`❌ Error during conversion/upload: ${error}`);
+        console.error(`❌ Error during conversion/upload: ${error.message}`);
         return null;
     }
 }

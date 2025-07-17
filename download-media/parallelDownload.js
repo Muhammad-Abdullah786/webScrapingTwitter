@@ -21,10 +21,10 @@ export async function convertAllVideos(videoURLs, cloudinaryVideos) {
     try {
         const results = await Promise.all(tasks);
         console.log("🎉 All videos converted!");
-        return cloudinaryVideos;
+        return { cloudinaryVideos, results };
     } catch (err) {
         console.error("❌ Error in conversion:", err);
     }
 
-    return results
+
 }
