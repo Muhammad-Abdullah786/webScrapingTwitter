@@ -12,7 +12,7 @@ This is a Twitter scraper designed to extract images, tweets, timestamps, and vi
 
 ## Prerequisites
 - Node.js installed on your system.
-- MongoDB installed and running, or a MongoDB Atlas connection (e.g., `mongodb+srv://sento:sento@first.mcuc1.mongodb.net/check`).
+- MongoDB installed and running, or a MongoDB Atlas connection (e.g., `mongodb+srv://dbname:dbname@first.mcuc1.mongodb.net/dbcollection`).
 - `mongoexport` tool installed for data export (part of MongoDB Database Tools).
 - pnpm package manager installed (`npm install -g pnpm`).
 - Stable internet connection for fast downloading.
