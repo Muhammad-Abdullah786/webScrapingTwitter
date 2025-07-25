@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import sleep from "../utility/sleepFn.js";
 
 export async function gatherMedia(page) {
@@ -10,6 +11,7 @@ export async function gatherMedia(page) {
             const images = [];
             const hasVideo = !!post.querySelector('video');
             const videoElement = post.querySelector('video')
+            const allVideoElement = Array.from(post.querySelectorAll('video'))
 
             const imgTags = post.querySelectorAll('img');
             imgTags.forEach(img => {
@@ -46,7 +48,8 @@ export async function gatherMedia(page) {
                         url: baseId,//? this is the privew and the baseid of video  i will get this url from the intercept network
                         type: 'video',
                         tweet: tweetText,
-                        time
+                        time,
+                        allVideoElement
                     });
                 }
             }

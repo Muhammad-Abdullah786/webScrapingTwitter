@@ -9,6 +9,7 @@ import Media from './mediaSchema.js';
 import { interceptVideos } from './download-media/getVideoURL.js';
 import { convertAllVideos } from './download-media/parallelDownload.js';
 import { randomUUID } from 'crypto';
+import { getAllVideos } from './utility/cloudinary.js';
 
 puppeteer.use(StealthPlugin());
 
@@ -62,7 +63,8 @@ export default async function scrap({ link, maxPost, username, password }) {
         await popupHandler(page);
         await sleep(3000);
     }
-
+    const getingVideos = await getAllVideos()
+    // console.log(`the data batch is ${getingVideos}`)
     let savedCount = 0;
     const processedTweetIds = new Set();
     const cloudinaryArray = []
@@ -81,7 +83,7 @@ export default async function scrap({ link, maxPost, username, password }) {
             });
 
             if (processedTweetIds.has(tweetId)) {
-                // console.log(`⏩ Already processed tweet: ${tweetId}`);
+                console.log(`⏩ Already processed tweet: ${tweetId}`);
                 continue;
             }
             console.log(`🔄 Processing new tweet: ${tweetId}`);
@@ -93,10 +95,10 @@ export default async function scrap({ link, maxPost, username, password }) {
             const videoURL = await interceptVideos(page, groupedVideos);
             const mediaItems = await gatherMedia(page);
             // console.log(`Video URLs: ${JSON.stringify(videoURL, null, 2)}`);
-            // console.log(`Media items: ${JSON.stringify(mediaItems, null, 2)}`);
+            console.log(`Media items: ${JSON.stringify(mediaItems, null, 2)}`);
 
             const { cloudinaryVideos, check: results } = videoURL.length > 0 ? await convertAllVideos(videoURL, cloudinaryArray) : [];
-            console.log(`the results are ${JSON.stringify(results, 2, 2)}`)
+            // console.log(`the results are ${JSON.stringify(results, 2, 2)}`)
             for (const item of mediaItems) {
                 const { tweet, time, url, type } = item;
 
@@ -110,7 +112,7 @@ export default async function scrap({ link, maxPost, username, password }) {
                             cUrl.includes(`/twitter_videos/${url}.mp4`)
                         );
                         finalUrl = cloudinaryUrl || randomUUID();
-                        console.log(`'''''''''''''''''''''''''''''''''''''''\n Matched Cloudinary URL for baseId ${url}: ${finalUrl}`);
+                        console.log(`''''''''''''''''''''''''''''''''''''\n Matched Cloudinary URL for baseId ${url}: ${finalUrl}`);
                     }
                 }
 

@@ -44,7 +44,9 @@ import { uploadVideoToCloudinaryStream } from '../utility/cloudinary.js'
 // }
 
 
+
 export async function convertToMP4(stream) {
+    console.time(`Conversion for ${stream.baseId}`);
     try {
         const sourceUrl = stream.master || stream.video;
         if (!sourceUrl) {
@@ -56,9 +58,11 @@ export async function convertToMP4(stream) {
         const cloudinaryFile = await uploadVideoToCloudinaryStream(sourceUrl, stream.baseId);
         console.log(`✅ Uploaded to Cloudinary: ${cloudinaryFile}`);
 
+        console.timeEnd(`Conversion for ${stream.baseId}`);
         return cloudinaryFile;
     } catch (error) {
-        console.error(`❌ Error during conversion/upload: ${error.message}`);
+        console.error(`❌ Error during conversion/upload: ${JSON.stringify(error.error.message, 2, 2)}`);
+        console.timeEnd(`Conversion for ${stream.baseId}`);
         return null;
     }
 }
