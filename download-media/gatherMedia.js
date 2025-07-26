@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import sleep from "../utility/sleepFn.js";
 
 export async function gatherMedia(page) {
@@ -7,7 +8,7 @@ export async function gatherMedia(page) {
         const posts = document.querySelectorAll('[data-testid="tweet"], article');
 
         Array.from(posts).forEach((post) => {
-            const mediaItems = []
+            const mediaItem = []
 
             const tweetElem = post.querySelector('div[lang]');
             const tweetText = tweetElem ? tweetElem.innerText.trim() : '';
@@ -20,7 +21,7 @@ export async function gatherMedia(page) {
                     const url = new URL(img.src)
                     url.searchParams.set('format', 'jpg')
                     url.searchParams.set('name', 'orig')
-                    mediaItems.push({
+                    mediaItem.push({
                         type: 'image',
                         url: url.toString()
                     })
@@ -29,12 +30,14 @@ export async function gatherMedia(page) {
 
 
             const videoElement = Array.from(post.querySelectorAll('video'))
+            console.log(`this is poster ${JSON.stringify(videoElement, 2, 2)}`)
             videoElement.forEach((video) => {
                 let posterUrl = video.getAttribute('poster')
+                console.log(`this is poster ${JSON.stringify(posterUrl, 2, 2)}`)
                 if (posterUrl) {
                     const match = posterUrl.match(/amplify_video_thumb\/(\d+)\//);
                     if (match) {
-                        mediaItems.push({
+                        mediaItem.push({
                             type: 'video',
                             url: match[1]
                         })
@@ -43,11 +46,11 @@ export async function gatherMedia(page) {
                 }
             })
 
-            if (mediaItems.length > 0) {
+            if (mediaItem.length > 0) {
                 result.push({
                     tweet: tweetText,
                     time: time,
-                    media: mediaItems
+                    media: mediaItem
 
                 })
             }

@@ -18,6 +18,7 @@ export async function convertAllVideos(videoURLs, cloudinaryVideos) {
                 cloudinaryVideos.push(url);
                 completed++;
                 console.log(`✅ Converted ${completed}/${videoURLs.length}`);
+
             }
             return cloudinaryVideos;
         })
@@ -25,7 +26,7 @@ export async function convertAllVideos(videoURLs, cloudinaryVideos) {
 
     try {
         const results = await Promise.all(tasks);
-        console.log("🎉 All videos converted!");
+        console.log("🎉 All videos converted! ", JSON.stringify(cloudinaryVideos, 2, 2));
         return { cloudinaryVideos, results };
     } catch (err) {
         console.error("❌ Error in conversion:", err);
