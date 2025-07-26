@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import sleep from "../utility/sleepFn.js";
 
 export async function gatherMedia(page) {
@@ -8,50 +7,49 @@ export async function gatherMedia(page) {
         const posts = document.querySelectorAll('[data-testid="tweet"], article');
 
         Array.from(posts).forEach((post) => {
-            const images = [];
-            const hasVideo = !!post.querySelector('video');
-            const videoElement = post.querySelector('video')
-            const allVideoElement = Array.from(post.querySelectorAll('video'))
+            const mediaItems = []
+
+            const tweetElem = post.querySelector('div[lang]');
+            const tweetText = tweetElem ? tweetElem.innerText.trim() : '';
+            const timeElem = post.querySelector('time');
+            const time = timeElem ? timeElem.getAttribute('datetime') : null;
 
             const imgTags = post.querySelectorAll('img');
             imgTags.forEach(img => {
                 if (img.src && img.src.includes('media')) {
-                    const cleaned = img.src.replace(/name=\w+/, 'name=orig');
-                    images.push({ type: 'image', url: cleaned });
+                    const url = new URL(img.src)
+                    url.searchParams.set('format', 'jpg')
+                    url.searchParams.set('name', 'orig')
+                    mediaItems.push({
+                        type: 'image',
+                        url: url.toString()
+                    })
                 }
             });
 
-            const tweetElem = post.querySelector('div[lang]');
-            const tweetText = tweetElem ? tweetElem.innerText.trim() : '';
-            const baseId = post.querySelector('poster');
 
-            const timeElem = post.querySelector('time');
-            const time = timeElem ? timeElem.getAttribute('datetime') : null;
+            const videoElement = Array.from(post.querySelectorAll('video'))
+            videoElement.forEach((video) => {
+                let posterUrl = video.getAttribute('poster')
+                if (posterUrl) {
+                    const match = posterUrl.match(/amplify_video_thumb\/(\d+)\//);
+                    if (match) {
+                        mediaItems.push({
+                            type: 'video',
+                            url: match[1]
+                        })
+                    }
 
-            if (images.length > 0) {
-                images.forEach(data => {
-                    result.push({
-                        url: data.url,
-                        type: 'image',
-                        tweet: tweetText,
-                        time
-                    });
-                });
-            }
-
-            if (hasVideo) {
-                const posterUrl = videoElement.getAttribute('poster')
-                const match = posterUrl.match(/amplify_video_thumb\/(\d+)\//);
-                if (match) {
-                    const baseId = match[1];
-                    result.push({
-                        url: baseId,//? this is the privew and the baseid of video  i will get this url from the intercept network
-                        type: 'video',
-                        tweet: tweetText,
-                        time,
-                        allVideoElement
-                    });
                 }
+            })
+
+            if (mediaItems.length > 0) {
+                result.push({
+                    tweet: tweetText,
+                    time: time,
+                    media: mediaItems
+
+                })
             }
         });
 
